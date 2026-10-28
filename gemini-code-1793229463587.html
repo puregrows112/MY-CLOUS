@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Closet - Smart Luxury Wardrobe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-main: #0f1712;
+      --card-bg: #18261e;
+      --card-soft: #203328;
+      --text-dark: #e8f0ec;
+      --text-muted: #8ca396;
+      --accent-warm: #d4a359;
+      --accent-green: #2d4a3a;
+      --border-color: #273d30;
+      --led-glow: rgba(212, 163, 89, 0.25);
+      --shadow-soft: 0 15px 35px rgba(0, 0, 0, 0.4);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 10px;
+      --transition-smooth: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.light-mode {
+      --bg-main: #f4f6f4;
+      --card-bg: #ffffff;
+      --card-soft: #eaece8;
+      --text-dark: #1b2e24;
+      --text-muted: #5c7365;
+      --accent-warm: #2d4a3a;
+      --border-color: #d1dcd5;
+      --led-glow: rgba(45, 74, 58, 0.15);
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+      user-select: none; -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main); color: var(--text-dark);
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0; overflow: hidden; transition: background 0.3s, color 0.3s;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      height: 100vh;
+      max-height: 920px;
+      background: var(--bg-main);
+      display: flex; flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 50px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .app-container {
+        border-radius: 32px;
+        border: 2px solid var(--border-color);
+        height: 88vh;
+      }
+    }
+
+    /* SPLASH SCREEN INTRO */
+    .splash-screen {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-main); z-index: 500; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .splash-screen.fade-out { opacity: 0; visibility: hidden; }
+
+    .hanger-anim-icon {
+      width: 70px; height: 70px; color: var(--accent-warm);
+      animation: pulseGlow 2s infinite alternate ease-in-out;
+    }
+    .hanger-anim-icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.95); filter: drop-shadow(0 0 5px var(--led-glow)); }
+      100% { transform: scale(1.08); filter: drop-shadow(0 0 20px var(--accent-warm)); }
+    }
+
+    /* App Header */
+    .app-header {
+      padding: clamp(12px, 2vh, 18px) 20px; display: flex; justify-content: space-between; align-items: center;
+      background: var(--card-bg); border-bottom: 1px solid var(--border-color); z-index: 10;
+    }
+    .brand-title { font-size: clamp(1rem, 2.2vw, 1.2rem); font-weight: 700; color: var(--text-dark); }
+    .header-profile-icon {
+      width: clamp(32px, 4vw, 38px); height: clamp(32px, 4vw, 38px); border-radius: 50%; background: var(--accent-warm);
+      color: var(--bg-main); display: flex; align-items: center; justify-content: center;
+      font-weight: 700; cursor: pointer; overflow: hidden; font-size: 0.9rem;
+    }
+    .header-profile-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* App Content */
+    .app-content { flex: 1; overflow-y: auto; padding: clamp(12px, 2vh, 18px); padding-bottom: 85px; }
+    .tab-pane { display: none; flex-direction: column; gap: 14px; height: 100%; }
+    .tab-pane.active { display: flex; }
+
+    #tab-closet {
+      overflow: hidden;
+      justify-content: space-between;
+    }
+
+    .wardrobe-frame {
+      position: relative; width: 100%; 
+      flex: 1;
+      max-height: 480px;
+      background: var(--card-bg); border-radius: var(--radius-md);
+      border: 5px solid var(--border-color); display: flex; flex-direction: column;
+      overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+    }
+
+    .door {
+      position: absolute; top: 0; width: 50%; height: 100%;
+      background: linear-gradient(135deg, var(--card-soft) 0%, var(--card-bg) 100%);
+      border: 1px solid var(--border-color); z-index: 20; transition: var(--transition-smooth);
+      display: flex; align-items: center; cursor: pointer; outline: none;
+    }
+    .door.left { left: 0; justify-content: flex-end; padding-right: 12px; }
+    .door.right { right: 0; justify-content: flex-start; padding-left: 12px; }
+    .door-handle { width: 4px; height: 44px; background: var(--accent-warm); border-radius: 3px; box-shadow: 0 0 8px var(--led-glow); }
+    .door.open-left { transform: translateX(-92%); }
+    .door.open-right { transform: translateX(92%); }
+
+    .upper-cabinet {
+      height: 34%; position: relative; border-bottom: 3px solid var(--border-color);
+      background: var(--card-soft); border-radius: 8px; margin: 5px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: inset 0 0 15px var(--led-glow);
+    }
+    .drawer-title { font-size: clamp(0.68rem, 1.5vw, 0.78rem); font-weight: 700; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.5px; }
+    .drawer-count { font-size: clamp(0.6rem, 1.3vw, 0.7rem); color: var(--text-muted); margin-top: 2px; }
+    .drawer-handle-bar { position: absolute; bottom: 6px; width: 40px; height: 3px; background: var(--border-color); border-radius: 2px; }
+
+    .drawers-grid {
+      display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+      gap: 5px; flex: 1; background: var(--card-bg); padding: 5px;
+    }
+    .drawer-box {
+      background: var(--card-soft); border: 1px solid var(--border-color); border-radius: 8px;
+      padding: 6px; position: relative; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: inset 0 0 10px var(--led-glow);
+    }
+
+    /* FULL SCREEN SIDE PANEL DRAWER PAGE */
+    .side-drawer-page {
+      position: absolute; top: 0; right: -100%; width: 100%; height: 100%;
+      background: var(--bg-main); z-index: 150; display: flex; flex-direction: column;
+      padding: 20px; transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .side-drawer-page.open { right: 0; }
+
+    .side-drawer-header {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .back-circle-btn {
+      width: 38px; height: 38px; border-radius: 50%; background: var(--card-soft);
+      border: 1px solid var(--border-color); color: var(--text-dark);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .back-circle-btn:hover { background: var(--accent-warm); color: var(--bg-main); }
+    .back-circle-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+    .drawer-items-list, .direct-items-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+      flex: 1; overflow-y: auto; padding-bottom: 20px; align-content: start;
+    }
+
+    .item-card-box {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm); padding: 8px; display: flex;
+      flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
+      transition: var(--transition-smooth); height: auto;
+    }
+    .item-card-box:hover { border-color: var(--accent-warm); }
+    .item-card-box img { max-width: 100%; max-height: 85px; object-fit: contain; }
+    .item-card-title { font-size: clamp(0.72rem, 1.5vw, 0.8rem); font-weight: 600; color: var(--text-dark); text-align: center; }
+
+    /* GREEN FLOATING ACTION MENU */
+    .green-action-menu-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      z-index: 280; display: none; align-items: center; justify-content: center;
+    }
+    .green-action-menu-overlay.active { display: flex; }
+
+    .green-action-card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 16px; width: 260px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex;
+      flex-direction: column; gap: 8px;
+    }
+    .green-action-card button {
+      background: var(--card-soft); border: 1px solid var(--border-color);
+      color: var(--text-dark); padding: 9px 12px; border-radius: var(--radius-sm);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; text-align: left;
+      transition: var(--transition-smooth);
+    }
+    .green-action-card button:hover { background: var(--accent-green); color: #fff; }
+    .green-action-card button.delete-btn { color: #ff5c5c; }
+    .green-action-card button.delete-btn:hover { background: #e63946; color: #fff; }
+
+    /* Settings Page */
+    .settings-group {
+      background: var(--card-bg); border-radius: var(--radius-md); padding: 14px;
+      border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;
+    }
+    .profile-card-box {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px; background: var(--card-soft); border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+    .profile-avatar-large {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--accent-warm);
+      color: #0f1712; display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700; cursor: pointer; overflow: hidden;
+    }
+    .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .editable-name-container {
+      display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 600;
+    }
+    .inline-name-input {
+      background: var(--bg-main); border: 1px solid var(--accent-warm); color: var(--text-dark);
+      font-size: 1rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; outline: none;
+      width: 130px; font-family: inherit;
+    }
+    .inline-name-input::selection { background: #3b82f6; color: #ffffff; }
+
+    .edit-pencil-btn { background: none; border: none; cursor: pointer; color: var(--accent-warm); }
+    .edit-pencil-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--card-soft); transition: .3s; border-radius: 22px; border: 1px solid var(--border-color);
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+      background-color: var(--accent-warm); transition: .3s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent-warm); }
+    input:checked + .slider:before { transform: translateX(18px); background-color: var(--bg-main); }
+
+    /* Bottom Nav Bar */
+    .bottom-nav {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 70px;
+      background: var(--card-bg); border-top: 1px solid var(--border-color);
+      display: flex; justify-content: space-around; align-items: center;
+      padding: 0 10px; z-index: 90;
+    }
+    .nav-item {
+      background: none; border: none; display: flex; flex-direction: column;
+      align-items: center; gap: 3px; color: var(--text-muted); cursor: pointer;
+      font-size: clamp(0.65rem, 1.5vw, 0.72rem); font-weight: 600; flex: 1; outline: none;
+    }
+    .nav-item svg { width: clamp(20px, 3.5vw, 22px); height: clamp(20px, 3.5vw, 22px); stroke: currentColor; stroke-width: 2; fill: none; }
+    .nav-item.active { color: var(--accent-warm); }
+
+    .nav-center-container { position: relative; width: 50px; display: flex; justify-content: center; }
+    .fab-btn {
+      position: absolute; top: -28px; width: 50px; height: 50px;
+      background: var(--accent-warm); border: 4px solid var(--bg-main);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); outline: none;
+    }
+    .fab-btn svg { width: 22px; height: 22px; stroke: var(--bg-main); stroke-width: 2; fill: none; }
+
+    /* Authentication Overlay */
+    .auth-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(10, 15, 12, 0.95); backdrop-filter: blur(20px);
+      z-index: 300; display: flex; align-items: center; justify-content: center;
+    }
+    .auth-overlay.hidden { display: none; }
+
+    .auth-card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 24px; width: 360px; max-width: 90vw;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7); display: flex;
+      flex-direction: column; gap: 12px; text-align: center;
+    }
+    .auth-card h2 { font-size: 1.3rem; font-weight: 700; color: var(--text-dark); }
+    .auth-card p { font-size: 0.78rem; color: var(--text-muted); }
+
+    .auth-input-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
+    .auth-input-group label { font-size: 0.7rem; font-weight: 600; color: var(--accent-warm); text-transform: uppercase; }
+    .auth-input-group input {
+      background: var(--card-soft); border: 1px solid var(--border-color);
+      padding: 9px 12px; border-radius: var(--radius-sm); color: var(--text-dark);
+      font-size: 0.82rem; outline: none;
+    }
+
+    .btn-google {
+      background: #ffffff; color: #222; border: none; padding: 10px;
+      border-radius: 30px; font-weight: 600; font-size: 0.82rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px; outline: none;
+    }
+
+    .btn-essembl {
+      background: var(--accent-warm); color: var(--bg-main); border: none;
+      padding: 11px 18px; border-radius: 30px; font-size: 0.82rem;
+      font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; outline: none;
+    }
+    .btn-outline {
+      background: transparent; color: var(--text-muted); border: 1px solid var(--border-color);
+      padding: 7px 14px; border-radius: 30px; font-size: 0.78rem; cursor: pointer; outline: none;
+    }
+
+    .auth-footer-link { font-size: 0.76rem; color: var(--accent-warm); cursor: pointer; margin-top: 3px; text-decoration: underline; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(10, 15, 12, 0.85); backdrop-filter: blur(10px);
+      z-index: 200; display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--card-bg); padding: 20px; border-radius: var(--radius-lg);
+      width: 340px; max-width: 90vw; display: flex; flex-direction: column; gap: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Google Chooser Modal */
+    .google-account-modal {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      z-index: 350; display: none; align-items: center; justify-content: center;
+    }
+    .google-account-modal.active { display: flex; }
+    .google-card {
+      background: #ffffff; color: #222; border-radius: 20px; padding: 22px;
+      width: 320px; display: flex; flex-direction: column; gap: 14px; text-align: left;
+    }
+    .account-row {
+      display: flex; align-items: center; gap: 12px; padding: 9px; border-radius: 10px;
+      cursor: pointer; transition: background 0.2s; border: 1px solid #eee;
+    }
+    .account-row:hover { background: #f5f5f5; }
+
+    #photoInput, #cameraInput, #avatarInput { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- SPLASH SCREEN ANIMATION -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="hanger-anim-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2c1.5 0 3 1.5 3 3v1h-6V5c0-1.5 1.5-3 3-3z"/><path d="M19 7H5c-1.1 0-2 .9-2 2v2c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V9c0-1.1-.9-2-2-2z"/><path d="M12 15v6"/></svg>
+    </div>
+    <h2 style="font-weight: 700; color: var(--accent-warm); letter-spacing: 1px;">MY CLOSET</h2>
+  </div>
+
+  <!-- GOOGLE ACCOUNT CHOOSER MODAL -->
+  <div class="google-account-modal" id="googleModal">
+    <div class="google-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; font-size: 0.95rem;">Choose an account</span>
+        <span style="font-size: 0.78rem; color: #666; cursor: pointer;" onclick="closeGoogleModal()">Cancel</span>
+      </div>
+      <p style="font-size: 0.78rem; color: #666;">to continue to <b>My Closet</b></p>
+      
+      <div class="account-row" onclick="confirmGoogleAccount('Pure Account', 'pure@gmail.com')">
+        <div style="width: 34px; height: 34px; border-radius: 50%; background: #4285F4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">P</div>
+        <div>
+          <div style="font-weight: 600; font-size: 0.85rem;">Pure Account</div>
+          <div style="font-size: 0.72rem; color: #666;">pure@gmail.com</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATION OVERLAY -->
+  <div class="auth-overlay" id="authOverlay">
+    
+    <!-- LOGIN SCREEN -->
+    <div class="auth-card" id="loginCard">
+      <h2>Welcome Back</h2>
+      <p>Log in to access your My Closet app</p>
+
+      <button class="btn-google" onclick="openGoogleModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-input-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="pure@gmail.com" value="pure@gmail.com">
+      </div>
+
+      <div class="auth-input-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" value="123456">
+      </div>
+
+      <button class="btn-essembl" style="width: 100%;" onclick="completeLogin('Pure')">Sign In</button>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+        <span class="auth-footer-link" onclick="showAuthPage('forgot')">Forgot Password?</span>
+        <span class="auth-footer-link" onclick="showAuthPage('signup')">Create Account</span>
+      </div>
+    </div>
+
+    <!-- CREATE ACCOUNT SCREEN -->
+    <div class="auth-card" id="signupCard" style="display: none;">
+      <h2>Create Account</h2>
+      <p>Fill in your details to join My Closet</p>
+
+      <div class="auth-input-group">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Pure">
+      </div>
+
+      <div class="auth-input-group">
+        <label>Email Address</label>
+        <input type="email" id="signupEmail" placeholder="pure@gmail.com">
+      </div>
+
+      <div class="auth-input-group">
+        <label>Date of Birth</label>
+        <input type="date" id="signupDob">
+      </div>
+
+      <div class="auth-input-group">
+        <label>Age</label>
+        <input type="number" id="signupAge" placeholder="15">
+      </div>
+
+      <button class="btn-essembl" style="width: 100%;" onclick="handleSignupSubmit()">Register Now</button>
+
+      <div style="margin-top: 4px;">
+        <span class="auth-footer-link" onclick="showAuthPage('login')">Already have an account? Sign In</span>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD SCREEN -->
+    <div class="auth-card" id="forgotCard" style="display: none;">
+      <h2>Reset Password</h2>
+      <p id="forgotSubtext">Enter your Gmail to receive an AI recovery code</p>
+
+      <div class="auth-input-group" id="forgotEmailGrp">
+        <label>Registered Gmail</label>
+        <input type="email" id="forgotEmail" placeholder="yourname@gmail.com">
+      </div>
+
+      <div class="auth-input-group" id="forgotOtpGrp" style="display: none;">
+        <label>Enter 6-Digit OTP</label>
+        <input type="text" id="otpVal" placeholder="123456" maxlength="6">
+      </div>
+
+      <button class="btn-essembl" id="btnForgotAction" style="width: 100%;" onclick="sendAiOtpCode()">Send AI Code</button>
+
+      <div style="margin-top: 4px;">
+        <span class="auth-footer-link" onclick="showAuthPage('login')">Back to Sign In</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- APP CONTAINER -->
+  <div class="app-container">
+    
+    <div class="app-header">
+      <div class="brand-title" id="headerTitle">My Closet</div>
+      <div class="header-profile-icon" id="headerProfileAvatar" onclick="switchTab('settings')">P</div>
+    </div>
+
+    <div class="app-content">
+
+      <!-- TAB 1: CLOSET -->
+      <div class="tab-pane active" id="tab-closet">
+        <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+          <span>MAIN WARDROBE</span>
+          <span>Tap doors & drawers</span>
+        </div>
+
+        <div class="wardrobe-frame">
+          <div class="door left" id="doorLeft" onclick="toggleCloset()"><div class="door-handle"></div></div>
+          <div class="door right" id="doorRight" onclick="toggleCloset()"><div class="door-handle"></div></div>
+
+          <div class="upper-cabinet" id="drawer-hanging" onclick="openSideDrawerPage('hanging', 'Hoodies & Jackets')">
+            <span class="drawer-title">Hoodies & Jackets</span>
+            <span class="drawer-count" id="count-hanging">0 items</span>
+            <div class="drawer-handle-bar"></div>
+          </div>
+
+          <div class="drawers-grid">
+            <div class="drawer-box" id="drawer-pants" onclick="openSideDrawerPage('pants', 'Pants Drawer')">
+              <span class="drawer-title">Pants</span>
+              <span class="drawer-count" id="count-pants">0 items</span>
+              <div class="drawer-handle-bar"></div>
+            </div>
+            <div class="drawer-box" id="drawer-tops" onclick="openSideDrawerPage('tops', 'Tops & Shirts')">
+              <span class="drawer-title">Tops & Shirts</span>
+              <span class="drawer-count" id="count-tops">0 items</span>
+              <div class="drawer-handle-bar"></div>
+            </div>
+            <div class="drawer-box" id="drawer-underwear" onclick="openSideDrawerPage('underwear', 'Underwear Drawer')">
+              <span class="drawer-title">Underwear</span>
+              <span class="drawer-count" id="count-underwear">0 items</span>
+              <div class="drawer-handle-bar"></div>
+            </div>
+            <div class="drawer-box" id="drawer-socks" onclick="openSideDrawerPage('socks', 'Socks Drawer')">
+              <span class="drawer-title">Socks</span>
+              <span class="drawer-count" id="count-socks">0 items</span>
+              <div class="drawer-handle-bar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DAILY WEAR -->
+      <div class="tab-pane" id="tab-daily">
+        <div style="font-size: 0.78rem; font-weight:700; color: var(--accent-warm);">DAILY WORN GARMENTS</div>
+        <div class="direct-items-grid" id="dailyRackDirectGrid"></div>
+      </div>
+
+      <!-- TAB 3: LAUNDRY -->
+      <div class="tab-pane" id="tab-laundry">
+        <div style="font-size: 0.78rem; font-weight:700; color: var(--accent-warm);">LAUNDRY BASKET</div>
+        <div class="direct-items-grid" id="laundryDirectGrid"></div>
+      </div>
+
+      <!-- TAB 4: SETTINGS -->
+      <div class="tab-pane" id="tab-settings">
+        <div class="settings-group">
+          <div style="font-weight: 700; color: var(--accent-warm); font-size: 0.85rem;">Account Settings</div>
+          
+          <div class="profile-card-box">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="profile-avatar-large" id="settingsAvatar" onclick="document.getElementById('avatarInput').click()">
+                P
+              </div>
+              
+              <div class="editable-name-container" id="nameContainer">
+                <span id="profileNameText">Pure</span>
+                <button class="edit-pencil-btn" onclick="startInlineNameEdit()">
+                  <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+              </div>
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" onchange="updateProfileAvatar(event)">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div style="font-weight: 700; color: var(--accent-warm); font-size: 0.85rem;">Appearance</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.82rem; font-weight: 600;">Dark / Light Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="themeToggle" onchange="toggleThemeMode(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div style="font-weight: 700; color: #ff5c5c; font-size: 0.85rem;">Session Control</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size:0.82rem;">Sign Out</span>
+            <button class="btn-outline" style="color: #ff5c5c; border-color: #ff5c5c;" onclick="handleLogOut()">Log Out</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FULL SCREEN SIDE PANEL PAGE FOR WARDROBE DRAWERS -->
+    <div class="side-drawer-page" id="sideDrawerPage">
+      <div class="side-drawer-header">
+        <div class="back-circle-btn" onclick="closeSideDrawerPage()">
+          <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </div>
+        <h3 id="sideDrawerTitle" style="font-weight: 700; font-size: 1.05rem; color: var(--text-dark);">Hoodies & Jackets</h3>
+      </div>
+      
+      <div class="drawer-items-list" id="sideDrawerItemsGrid"></div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <button class="nav-item active" id="nav-closet" onclick="switchTab('closet')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Closet</span>
+      </button>
+
+      <button class="nav-item" id="nav-daily" onclick="switchTab('daily')">
+        <svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H4v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10h.35a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg>
+        <span>Worn</span>
+      </button>
+
+      <div class="nav-center-container">
+        <div class="fab-btn" onclick="openAddSourceModal()">
+          <svg viewBox="0 0 24 24"><path d="M12 2c1.5 0 3 1.5 3 3v1h-6V5c0-1.5 1.5-3 3-3z"/><path d="M19 7H5c-1.1 0-2 .9-2 2v2c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V9c0-1.1-.9-2-2-2z"/><path d="M12 15v6"/></svg>
+        </div>
+      </div>
+
+      <button class="nav-item" id="nav-laundry" onclick="switchTab('laundry')">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        <span>Laundry</span>
+      </button>
+
+      <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .69.41 1.31 1.03 1.51h.07a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.07a1.65 1.65 0 0 0-1.03 1.51z"></path></svg>
+        <span>Settings</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- GREEN FLOATING ACTION MENU -->
+  <div class="green-action-menu-overlay" id="greenActionOverlay" onclick="closeGreenActionMenu(event)">
+    <div class="green-action-card" id="greenActionCard">
+      <button onclick="executeAction('wear')">👔 Move to Daily Wear</button>
+      <button onclick="executeAction('laundry')">🧺 Move to Laundry</button>
+      <button class="delete-btn" onclick="executeAction('delete')">🗑️ Delete Garment</button>
+    </div>
+  </div>
+
+  <!-- SOURCE MODAL -->
+  <div class="modal-overlay" id="sourceModal">
+    <div class="modal-card">
+      <h3 style="color: var(--text-dark); text-align: center;">Add New Garment</h3>
+      <button class="btn-essembl" onclick="triggerCamera()">📸 Take Photo (Camera)</button>
+      <button class="btn-essembl" style="background: var(--card-soft); color: var(--text-dark); border: 1px solid var(--border-color);" onclick="document.getElementById('photoInput').click()">🖼️ Choose from Gallery</button>
+      <button class="btn-essembl" style="background: transparent; color: var(--text-muted);" onclick="closeSourceModal()">Cancel</button>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" onchange="handleImageUpload(event)">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+  </div>
+
+  <!-- ASSIGNMENT MODAL -->
+  <div class="modal-overlay" id="assignmentModal">
+    <div class="modal-card">
+      <h3 style="color: var(--text-dark); text-align: center;">Select Storage Drawer</h3>
+      <div style="width: 100%; height: 120px; background: var(--card-soft); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <img id="previewUploadedImg" src="" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+      </div>
+
+      <div class="auth-input-group">
+        <label>Garment Name / Title</label>
+        <input type="text" id="garmentNameInput" placeholder="e.g. Black Jacket" value="Black Jacket">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button class="btn-essembl" data-value="hanging" onclick="selectDrawerOption(this)" style="grid-column: span 2;">🧥 Hoodies & Jackets</button>
+        <button class="btn-essembl" data-value="pants" onclick="selectDrawerOption(this)" style="background: var(--card-soft); color: var(--text-dark);">👖 Pants</button>
+        <button class="btn-essembl" data-value="tops" onclick="selectDrawerOption(this)" style="background: var(--card-soft); color: var(--text-dark);">👕 Tops</button>
+        <button class="btn-essembl" data-value="underwear" onclick="selectDrawerOption(this)" style="background: var(--card-soft); color: var(--text-dark);">🩲 Underwear</button>
+        <button class="btn-essembl" data-value="socks" onclick="selectDrawerOption(this)" style="background: var(--card-soft); color: var(--text-dark);">🧦 Socks</button>
+      </div>
+
+      <button class="btn-essembl" style="width: 100%; margin-top: 4px;" onclick="confirmGarmentAssignment()">Save to Wardrobe</button>
+    </div>
+  </div>
+
+  <script>
+    let closetOpen = false;
+    let pendingImageSrc = null;
+    let activeCategory = null;
+    let selectedTargetDrawer = 'hanging';
+    let activeSelectedItem = null;
+    let generatedOtp = null;
+
+    let wardrobeData = {
+      hanging: [{ id: 1, name: "Black Puffer Jacket", color: "#1f2937", homeDrawer: 'hanging' }],
+      pants: [{ id: 2, name: "Blue Denim Jeans", color: "#2563eb", homeDrawer: 'pants' }],
+      tops: [{ id: 3, name: "White Varsity Tee", color: "#e5e7eb", homeDrawer: 'tops' }],
+      underwear: [], socks: [], dailyRack: [], laundry: []
+    };
+
+    window.onload = function() {
+      const isLoggedIn = localStorage.getItem('myClosetLoggedIn');
+      const splash = document.getElementById('splashScreen');
+
+      setTimeout(() => {
+        splash.classList.add('fade-out');
+        if(isLoggedIn === 'true') {
+          document.getElementById('authOverlay').classList.add('hidden');
+        }
+      }, 1800);
+      renderDirectGrid('dailyRack');
+      renderDirectGrid('laundry');
+    };
+
+    /* AUTHENTICATION & NAVIGATION PAGES LOGIC FIXED */
+    function showAuthPage(page) {
+      document.getElementById('loginCard').style.display = 'none';
+      document.getElementById('signupCard').style.display = 'none';
+      document.getElementById('forgotCard').style.display = 'none';
+
+      if(page === 'login') document.getElementById('loginCard').style.display = 'flex';
+      if(page === 'signup') document.getElementById('signupCard').style.display = 'flex';
+      if(page === 'forgot') {
+        document.getElementById('forgotCard').style.display = 'flex';
+        document.getElementById('forgotEmailGrp').style.display = 'flex';
+        document.getElementById('forgotOtpGrp').style.display = 'none';
+        const btn = document.getElementById('btnForgotAction');
+        btn.innerText = "Send AI Code";
+        btn.onclick = sendAiOtpCode;
+      }
+    }
+
+    function openGoogleModal() { document.getElementById('googleModal').classList.add('active'); }
+    function closeGoogleModal() { document.getElementById('googleModal').classList.remove('active'); }
+
+    function confirmGoogleAccount(name, email) {
+      closeGoogleModal();
+      completeLogin(name);
+    }
+
+    function completeLogin(userName) {
+      localStorage.setItem('myClosetLoggedIn', 'true');
+      if(userName) {
+        document.getElementById('profileNameText').innerText = userName;
+        document.getElementById('headerProfileAvatar').innerText = userName[0].toUpperCase();
+        document.getElementById('settingsAvatar').innerText = userName[0].toUpperCase();
+      }
+      document.getElementById('authOverlay').classList.add('hidden');
+    }
+
+    function handleSignupSubmit() {
+      const email = document.getElementById('signupEmail').value;
+      const name = document.getElementById('signupName').value || 'Pure';
+      if(email) {
+        completeLogin(name);
+      } else {
+        alert("Please enter your email address.");
+      }
+    }
+
+    function sendAiOtpCode() {
+      const email = document.getElementById('forgotEmail').value;
+      if(!email) { alert("Please enter your Gmail."); return; }
+      generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      document.getElementById('forgotEmailGrp').style.display = 'none';
+      document.getElementById('forgotOtpGrp').style.display = 'flex';
+      
+      const btn = document.getElementById('btnForgotAction');
+      btn.innerText = "Verify Code";
+      btn.onclick = verifyOtp;
+
+      alert("🤖 AI Recovery Code: " + generatedOtp);
+    }
+
+    function verifyOtp() {
+      if(document.getElementById('otpVal').value === generatedOtp) {
+        alert("Verified Successfully! You can now log in.");
+        showAuthPage('login');
+      } else { 
+        alert("Incorrect OTP Code."); 
+      }
+    }
+
+    function handleLogOut() {
+      localStorage.removeItem('myClosetLoggedIn');
+      location.reload();
+    }
+
+    function toggleThemeMode(isLight) {
+      if(isLight) document.body.classList.add('light-mode');
+      else document.body.classList.remove('light-mode');
+    }
+
+    function startInlineNameEdit() {
+      const container = document.getElementById('nameContainer');
+      const textSpan = document.getElementById('profileNameText');
+      const currentName = textSpan.innerText;
+
+      container.innerHTML = `<input type="text" id="inlineInput" class="inline-name-input" value="${currentName}">`;
+      const input = document.getElementById('inlineInput');
+      input.focus();
+      input.select();
+
+      input.addEventListener('blur', finishInlineEdit);
+      input.addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') finishInlineEdit();
+      });
+    }
+
+    function finishInlineEdit() {
+      const input = document.getElementById('inlineInput');
+      if(!input) return;
+      const newName = input.value.trim() || 'Pure';
+      
+      const container = document.getElementById('nameContainer');
+      container.innerHTML = `
+        <span id="profileNameText">${newName}</span>
+        <button class="edit-pencil-btn" onclick="startInlineNameEdit()">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        </button>
+      `;
+
+      const firstChar = newName[0].toUpperCase();
+      document.getElementById('headerProfileAvatar').innerText = firstChar;
+      document.getElementById('settingsAvatar').innerText = firstChar;
+    }
+
+    function openSideDrawerPage(category, title) {
+      activeCategory = category;
+      document.getElementById('sideDrawerTitle').innerText = title;
+      renderSideDrawerItems(wardrobeData[category]);
+      document.getElementById('sideDrawerPage').classList.add('open');
+    }
+
+    function closeSideDrawerPage() {
+      document.getElementById('sideDrawerPage').classList.remove('open');
+    }
+
+    function renderSideDrawerItems(items) {
+      const grid = document.getElementById('sideDrawerItemsGrid');
+      grid.innerHTML = '';
+
+      if(items.length === 0) {
+        grid.innerHTML = `<div style="grid-column: span 2; text-align:center; color:var(--text-muted); padding: 40px 0;">No garments in this section</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'item-card-box';
+        
+        let visual = item.image 
+          ? `<img src="${item.image}">` 
+          : `<div style="width:65px; height:55px; background:${item.color}; border-radius:6px;"></div>`;
+
+        card.innerHTML = `${visual}<span class="item-card-title">${item.name || 'Garment'}</span>`;
+        card.onclick = function() { triggerGarmentAction(item); };
+        grid.appendChild(card);
+      });
+    }
+
+    function renderDirectGrid(cat) {
+      const containerId = cat === 'dailyRack' ? 'dailyRackDirectGrid' : 'laundryDirectGrid';
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      const items = wardrobeData[cat];
+      if(items.length === 0) {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; color:var(--text-muted); padding: 50px 0;">No garments here right now.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'item-card-box';
+        
+        let visual = item.image 
+          ? `<img src="${item.image}">` 
+          : `<div style="width:65px; height:55px; background:${item.color}; border-radius:6px;"></div>`;
+
+        card.innerHTML = `${visual}<span class="item-card-title">${item.name || 'Garment'}</span>`;
+        card.onclick = function() {
+          activeCategory = cat;
+          triggerGarmentAction(item);
+        };
+        container.appendChild(card);
+      });
+    }
+
+    function triggerGarmentAction(item) {
+      activeSelectedItem = item;
+      document.getElementById('greenActionOverlay').classList.add('active');
+    }
+
+    function closeGreenActionMenu(e) {
+      if(e.target.id === 'greenActionOverlay') {
+        document.getElementById('greenActionOverlay').classList.remove('active');
+      }
+    }
+
+    function executeAction(type) {
+      document.getElementById('greenActionOverlay').classList.remove('active');
+      if(!activeSelectedItem) return;
+
+      const item = activeSelectedItem;
+      if(type === 'wear') {
+        wardrobeData[activeCategory] = wardrobeData[activeCategory].filter(i => i.id !== item.id);
+        wardrobeData.dailyRack.push(item);
+      } else if(type === 'laundry') {
+        wardrobeData[activeCategory] = wardrobeData[activeCategory].filter(i => i.id !== item.id);
+        wardrobeData.laundry.push(item);
+      } else if(type === 'delete') {
+        wardrobeData[activeCategory] = wardrobeData[activeCategory].filter(i => i.id !== item.id);
+      }
+
+      updateCounts();
+      if(document.getElementById('sideDrawerPage').classList.contains('open')) {
+        renderSideDrawerItems(wardrobeData[activeCategory]);
+      }
+      renderDirectGrid('dailyRack');
+      renderDirectGrid('laundry');
+    }
+
+    function openAddSourceModal() { document.getElementById('sourceModal').classList.add('active'); }
+    function closeSourceModal() { document.getElementById('sourceModal').classList.remove('active'); }
+    function triggerCamera() { closeSourceModal(); document.getElementById('cameraInput').click(); }
+
+    function handleImageUpload(event) {
+      closeSourceModal();
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width; canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i], g = data[i+1], b = data[i+2];
+              const brightness = (r + g + b) / 3;
+              const colorDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+              if ((brightness > 165 && colorDiff < 25) || (brightness > 210)) {
+                data[i+3] = 0;
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            pendingImageSrc = canvas.toDataURL('image/png');
+            
+            document.getElementById('previewUploadedImg').src = pendingImageSrc;
+            document.getElementById('assignmentModal').classList.add('active');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function selectDrawerOption(btn) {
+      document.querySelectorAll('#assignmentModal .btn-essembl[data-value]').forEach(b => {
+        b.style.background = "var(--card-soft)"; b.style.color = "var(--text-dark)";
+      });
+      btn.style.background = "var(--accent-warm)"; btn.style.color = "var(--bg-main)";
+      selectedTargetDrawer = btn.getAttribute('data-value');
+    }
+
+    function confirmGarmentAssignment() {
+      const garmentTitle = document.getElementById('garmentNameInput').value.trim() || 'Garment';
+      const newItem = {
+        id: Date.now(),
+        name: garmentTitle,
+        color: "#d4a359",
+        image: pendingImageSrc,
+        homeDrawer: selectedTargetDrawer
+      };
+      wardrobeData[selectedTargetDrawer].push(newItem);
+      updateCounts();
+      renderDirectGrid('dailyRack');
+      renderDirectGrid('laundry');
+      document.getElementById('assignmentModal').classList.remove('active');
+    }
+
+    function updateCounts() {
+      ['hanging', 'pants', 'tops', 'underwear', 'socks', 'dailyRack', 'laundry'].forEach(cat => {
+        const el = document.getElementById(`count-${cat}`);
+        if (el) el.innerText = `${wardrobeData[cat].length} items`;
+      });
+    }
+
+    function toggleCloset() {
+      closetOpen = !closetOpen;
+      document.getElementById('doorLeft').classList.toggle('open-left', closetOpen);
+      document.getElementById('doorRight').classList.toggle('open-right', closetOpen);
+    }
+
+    function switchTab(tabId) {
+      closeSideDrawerPage();
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+      document.getElementById('tab-' + tabId).classList.add('active');
+      if(document.getElementById('nav-' + tabId)) {
+        document.getElementById('nav-' + tabId).classList.add('active');
+      }
+
+      const titles = { closet: "My Closet", daily: "Worn Garments", laundry: "Laundry Basket", settings: "Settings" };
+      document.getElementById('headerTitle').innerText = titles[tabId] || "My Closet";
+    }
+
+    function updateProfileAvatar(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imgHTML = `<img src="${e.target.result}">`;
+          document.getElementById('settingsAvatar').innerHTML = imgHTML;
+          document.getElementById('headerProfileAvatar').innerHTML = imgHTML;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    updateCounts();
+  </script>
+</body>
+</html>
